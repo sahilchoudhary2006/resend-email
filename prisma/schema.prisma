@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  domain      String
+  displayName String
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  domains     Domain[]
+  threads     EmailThread[]
+  templates   Template[]
+  contacts    Contact[]
+  broadcasts  Broadcast[]
+  automations Automation[]
+}
+
+model Domain {
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id])
+}
+
+model EmailThread {
+  id               String   @id @default(uuid())
+  clientId         String
+  externalThreadId String?
+  subject          String
+  status           String   @default("OPEN")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  client           Client   @relation(fields: [clientId], references: [id])
+  messages         EmailMessage[]
+}
+
+model EmailMessage {
+  id              String   @id @default(uuid())
+  threadId        String
+  direction       String   // INBOUND / OUTBOUND
+  from            String
+  to              String
+  subject         String
+  text            String?
+  html            String?
+  resendMessageId String?
+  messageId       String?
+  status          String   @default("PROCESSED")
+  createdAt       DateTime @default(now())
+
+  thread          EmailThread @relation(fields: [threadId], references: [id])
+}
+
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique // From Resend, ensures idempotency
+  type        String
+  payload     String   // Storing JSON payload as a string
+  processedAt DateTime @default(now())
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  subject     String
+  html        String?
+  text        String?
+  variables   String?  // JSON string array of variable names
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id])
+  broadcasts  Broadcast[]
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  clientId    String
+  email       String
+  firstName   String?
+  lastName    String?
+  company     String?
+  metadata    String?  // JSON string for extra fields
+  subscribed  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id])
+  broadcasts  BroadcastRecipient[]
+}
+
+model Broadcast {
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  subject     String
+  templateId  String
+  sender      String
+  status      String   @default("DRAFT") // DRAFT, SCHEDULED, SENDING, SENT
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id])
+  template    Template @relation(fields: [templateId], references: [id])
+  recipients  BroadcastRecipient[]
+}
+
+model BroadcastRecipient {
+  id          String   @id @default(uuid())
+  broadcastId String
+  contactId   String
+  status      String   @default("PENDING") // PENDING, SENT, DELIVERED, OPENED, CLICKED, BOUNCED
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  bouncedAt   DateTime?
+
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id])
+  contact     Contact   @relation(fields: [contactId], references: [id])
+}
+
+model Automation {
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  status      String   @default("ACTIVE") // ACTIVE, PAUSED
+  trigger     String   // e.g., 'email.received'
+  workflow    String   // JSON string representing nodes (conditions, actions)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id])
+}

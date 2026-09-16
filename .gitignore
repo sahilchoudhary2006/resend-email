@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.env
+*.pem
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build and coverage outputs
+dist/
+build/
+coverage/
+*.lcov
+.nyc_output
+
+# Temporary files and caches
+.npm
+.eslintcache
+.parcel-cache
+.node_repl_history
+*.tgz
+.env
+.env.local
+node_modules
+*.db
